@@ -2,7 +2,9 @@ package com.pinyougou.sellergoods.service.impl;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.dubbo.config.annotation.Service;
@@ -33,6 +35,9 @@ public class TypeTemplateServiceImpl implements TypeTemplateService {
 	private TbTypeTemplateMapper typeTemplateMapper;
 	@Autowired
 	private TbSpecificationOptionMapper specificationOptionMapper;
+	
+	@Autowired
+	private RedisTemplate redisTemplate;
 	/**
 	 * 查询全部
 	 */
@@ -89,7 +94,7 @@ public class TypeTemplateServiceImpl implements TypeTemplateService {
 	}
 	
 	
-		@Override
+	@Override
 	public PageResult findPage(TbTypeTemplate typeTemplate, int pageNum, int pageSize) {
 		PageHelper.startPage(pageNum, pageSize);
 		
@@ -113,6 +118,9 @@ public class TypeTemplateServiceImpl implements TypeTemplateService {
 		}
 		
 		Page<TbTypeTemplate> page= (Page<TbTypeTemplate>)typeTemplateMapper.selectByExample(example);		
+		
+		saveToRedis(); //将品牌和规格列表存入缓存
+		
 		return new PageResult(page.getTotal(), page.getResult());
 	}
 
@@ -132,6 +140,35 @@ public class TypeTemplateServiceImpl implements TypeTemplateService {
 				map.put("options",options );
 			}
 			return list;
+		}
+		
+		/**
+		 * 将数据存入缓存
+		 */
+		private void saveToRedis() {
+			List<TbTypeTemplate> templates = findAll(); //获取类型模板集合
+			
+			for(TbTypeTemplate typeTemplate : templates) {
+				
+				//储存品牌列表
+				List<Map> brandList = JSON.parseArray(typeTemplate.getBrandIds(), Map.class);
+				redisTemplate.boundHashOps("brandList").put(typeTemplate.getId(), brandList);
+				System.out.println("更新缓存：品牌列表");
+				
+				//储存规格列表
+				
+				List<Map> specList = findSpecList(typeTemplate.getId());//根据模板 ID 查询规格列表
+				redisTemplate.boundHashOps("specList").put(typeTemplate.getId(), specList);
+				System.out.println("更新缓存：规格列表");
+				
+			}
+		}
+		
+		@Test
+		public void testRedis() {
+			//List list =  (List) redisTemplate.boundHashOps("brandList").get(35);
+//			 redisTemplate.boundHashOps("itemCat");
+			System.out.println("aaa");
 		}
 	
 }
