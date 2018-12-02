@@ -88,6 +88,14 @@
 			<artifactId>servlet-api</artifactId>
 			<scope>provided</scope>
 		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.activemq</groupId>
+			<artifactId>activemq-client</artifactId>
+			<version>5.13.4</version>
+		</dependency>
+		
+		
 
 
 		<dependency>
@@ -105,16 +113,8 @@
 			<artifactId>common</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
-		<dependency>
-			<groupId>com.pinyougou</groupId>
-			<artifactId>pinyougou-search-interface</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>com.pinyougou</groupId>
-			<artifactId>pinyougou-page-interface</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
+		
+		
 	</dependencies>
 
 

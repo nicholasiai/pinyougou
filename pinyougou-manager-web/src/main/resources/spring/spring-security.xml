@@ -32,8 +32,8 @@ http://www.springframework.org/schema/security/spring-security.xsd">
 	<authentication-manager>
 		<authentication-provider>
 			<user-service>
-				<user name="admin" password="123456" authorities="ROLE_ADMIN" />
-				<user name="sunwukong" password="dasheng" authorities="ROLE_ADMIN" />
+				<user name="admin" password="88888888" authorities="ROLE_ADMIN" />
+				<user name="sunwukong" password="88888888" authorities="ROLE_ADMIN" />
 			</user-service>
 		</authentication-provider>
 	</authentication-manager>

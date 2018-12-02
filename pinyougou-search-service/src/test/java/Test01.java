@@ -1,3 +1,4 @@
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
 import com.pinyougou.pojo.TbGoods;
@@ -23,6 +24,15 @@ public class Test01 {
 		System.out.println(goods.getGoods().getAuditStatus());
 		
 		System.out.println(goods.getGoods()==goods2);
+		
+	}
+	
+	@Test
+	public void test02() {
+		String random = RandomStringUtils.random(6);
+		String randomNumeric = RandomStringUtils.randomNumeric(6);
+		System.out.println(randomNumeric);
+		
 		
 	}
 	

@@ -10,9 +10,9 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerConfig;
 
-import com.alibaba.dubbo.config.annotation.Service;
 import com.pinyougou.mapper.TbGoodsDescMapper;
 import com.pinyougou.mapper.TbGoodsMapper;
 import com.pinyougou.mapper.TbItemCatMapper;
@@ -52,6 +52,9 @@ public class ItemPageServiceImpl implements ItemPageService{
 	@Autowired
 	private TbItemMapper itemMapper;
 	
+	/**
+	 * 生成商品详细页
+	 */
 	@Override
 	public boolean genItemHtml(Long goodsId) {
 		
@@ -103,6 +106,29 @@ public class ItemPageServiceImpl implements ItemPageService{
 		
 		return false;
 	}
+
+	/**
+	 * 删除商品详细页
+	 */
+	@Override
+	public boolean deleteItemHtml(Long[] goodsIds) {
+		
+		try {
+			for(Long goodsId :goodsIds) {
+				new File(pagedir+goodsId+".html").delete();
+			}
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+		
+		
+		
+	}
+	
+	
 	
 
 }

@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.data.solr.core.SolrTemplate;
+import org.springframework.data.solr.core.query.Query;
+import org.springframework.data.solr.core.query.SimpleQuery;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.druid.support.json.JSONParser;
@@ -42,6 +44,7 @@ public class SolrUtil {
 		System.out.println("----商品列表----");  
 		
 		for(TbItem tbItem : tbItems) {
+			//tbItem.setImage("http://88rt.org/pic/2018/0416/128-lp.jpg");
 			Map map = JSON.parseObject(tbItem.getSpec());//将 spec 字段中的 json 字符串转换为 map
 			tbItem.setSpecMap(map);//给带注解的字段赋值 
 			System.out.println(tbItem.getTitle());
@@ -64,7 +67,7 @@ public class SolrUtil {
 
 		
 		solrUtil.importItemData();
-		
+		//solrUtil.deleAll();
 	}
 	
 	
@@ -94,5 +97,14 @@ public class SolrUtil {
 		solrTemplate.commit();
 		
 	}
+	/**
+	 * 删除所有solr
+	 */
+	public void deleAll() {
+		Query query=new SimpleQuery("*:*");
+		solrTemplate.delete(query);
+		solrTemplate.commit();
+	}
+	
 
 }

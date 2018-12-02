@@ -1,19 +1,24 @@
 package com.pinyougou.manager.controller;
-import java.util.Arrays;
 import java.util.List;
 
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.Session;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.core.MessageCreator;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.alibaba.dubbo.config.annotation.Reference;
-import com.pinyougou.page.service.ItemPageService;
+import com.alibaba.fastjson.JSON;
 import com.pinyougou.pojo.TbGoods;
 import com.pinyougou.pojo.TbItem;
 import com.pinyougou.pojogroup.Goods;
-import com.pinyougou.search.service.ItemSearchService;
 import com.pinyougou.sellergoods.service.GoodsService;
-import com.pinyougou.sellergoods.service.ItemService;
 
 import entity.PageResult;
 import entity.Result;
@@ -29,11 +34,27 @@ public class GoodsController {
 	@Reference
 	private GoodsService goodsService;
 	
-	@Reference
-	private ItemSearchService itemSearchService; 
+//	@Reference
+//	private ItemSearchService itemSearchService; 
 	
-	@Reference(timeout=50000)
-	private ItemPageService itemPageService;
+//	@Reference(timeout=50000)
+//	private ItemPageService itemPageService;
+	
+	@Autowired
+	private Destination queueSolrDestination;  //用于发送 solr 导入的消息
+	
+	@Autowired
+	private Destination queueSolrDeleteDestination;//用户在索引库中删除记录
+	
+	@Autowired
+	private Destination topicPageDestination; //用于添加静态页面
+	
+	@Autowired
+	private Destination topicPageDeleteDestination;//用于删除静态网页的消息
+						
+	@Autowired
+	private JmsTemplate jmsTemplate;  //Spring 提供的 JMS 工具类，它可以进行消息发送、接收等
+	
 	
 	/**
 	 * 返回全部列表
@@ -105,7 +126,25 @@ public class GoodsController {
 	public Result delete(Long [] ids){
 		try {
 			goodsService.delete(ids);
-			itemSearchService.deleteByGoodsIds(Arrays.asList(ids)); //删除solr数据
+//			itemSearchService.deleteByGoodsIds(Arrays.asList(ids)); //删除solr数据
+			
+			jmsTemplate.send(queueSolrDeleteDestination, new MessageCreator() {
+				
+				@Override
+				public Message createMessage(Session session) throws JMSException {
+					return session.createObjectMessage(ids);
+				}
+			});
+			//删除静态页面
+			jmsTemplate.send(topicPageDeleteDestination,new MessageCreator() {
+				
+				@Override
+				public Message createMessage(Session session) throws JMSException {
+					return session.createObjectMessage(ids);
+				}
+			});
+			
+			
 			return new Result(true, "删除成功"); 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -137,17 +176,37 @@ public class GoodsController {
 			
 			if(status.equals("1")) { //审核通过
 				
-				List<TbItem> list = goodsService.findItemListByGoodsIdandStatus(ids, status);
-				
-				if(list.size()>0) {  //将数据导入到solr
-					itemSearchService.importList(list);
-				}else {
-					System.out.println("数据库没有对应的数据");
-				}
+				List<TbItem> itemList = goodsService.findItemListByGoodsIdandStatus(ids, status);
 				
 				//静态页生成
-				for(Long goodsId:ids){
-					itemPageService.genItemHtml(goodsId);
+				for(final Long goodsId:ids){
+					//itemPageService.genItemHtml(goodsId);
+					jmsTemplate.send(topicPageDestination,new MessageCreator() {
+						
+						@Override
+						public Message createMessage(Session session) throws JMSException {
+							return session.createTextMessage(goodsId+"");
+						}
+					});
+				}
+				
+				if(itemList.size()>0) {  //将数据导入到solr
+//					itemSearchService.importList(itemList);
+					final String jsonString = JSON.toJSONString(itemList);
+					
+					jmsTemplate.send(queueSolrDestination,new MessageCreator() {
+						//匿名内部类
+						@Override
+						public Message createMessage(Session session) throws JMSException {
+							
+							return session.createTextMessage(jsonString); //发送数据
+						}
+					});
+					
+					
+					
+				}else {
+					System.out.println("数据库没有对应的数据");
 				}
 			}
 			
@@ -160,7 +219,7 @@ public class GoodsController {
 	
 	@RequestMapping("/genHtml")
 	public void genHTML(Long goodsId) {
-		itemPageService.genItemHtml(goodsId);
+		//itemPageService.genItemHtml(goodsId);
 	}
 	
 }

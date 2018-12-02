@@ -12,7 +12,6 @@
 
 
 	<solr:solr-server id="solrServer" url="http://127.0.0.1:8080/solr" />
-		
 	<bean id="" class="org.springframework.data.solr.core.SolrTemplate">
 		<constructor-arg ref="solrServer" />
 	</bean>
